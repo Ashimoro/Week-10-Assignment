@@ -18,7 +18,11 @@ public class PlayerController : MonoBehaviour
     private bool movingRight;
     private bool jumping;
 
-    public float jumpForce = 200f;
+    private float acceleration;
+    public float jumpforce;
+
+    float hInput;
+    float speed = 100 * Time.fixedDeltaTime;
 
     public LayerMask groundLayer;
     public Transform groundCheck;
@@ -39,13 +43,12 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
- 
         float hInput = Input.GetAxis("Horizontal");
-        float speed = 100 * Time.deltaTime;
         Vector2 playerInput = new Vector2(hInput * speed, 0);
+        Debug.Log(playerInput);
         MovementUpdate(playerInput);
         IsGrounded();
-
+        
         if (hInput <= -0.01 || hInput >= 0.01)
         {
             moving = true;
@@ -77,26 +80,42 @@ public class PlayerController : MonoBehaviour
 
 
 
-        if (Input.GetKeyDown("space"))
-        {
-            Jump();
-        }
 
-        Debug.Log(jumping);
+        //Debug.Log(jumping);
         //Debug.Log(rb.velocity);
-        Debug.Log(hInput);
+        //Debug.Log(hInput);
     }
 
+
+    public void FixedUpdate()
+    {
+
+        if (Input.GetKeyDown("space"))
+        {
+            if (IsGrounded())
+            {
+                Debug.Log(rb.velocity);
+                rb.velocity = Vector2.up * jumpforce;
+            }
+        }
+
+
+    }
 
     public void Jump()
     {
 
-            rb.AddForce (Vector2.up * jumpForce, ForceMode2D.Force);
     }
 
     private void MovementUpdate(Vector2 playerInput)
     {
-        rb.MovePosition(rb.position + playerInput);
+        Vector2 velocity = rb.velocity;
+
+
+        if (playerInput.x != 0)
+        {
+            velocity += playerInput * acceleration * Time.fixedDeltaTime;
+        }
     }
 
 
