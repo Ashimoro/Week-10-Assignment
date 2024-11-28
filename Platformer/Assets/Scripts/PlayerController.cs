@@ -32,6 +32,7 @@ public class PlayerController : MonoBehaviour
     private float acceleration;
     private bool isJumping = false;
     private bool onTheGround;
+    private bool collisionExit;
 
 
 
@@ -46,7 +47,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(playerRB.velocity);
+        Debug.Log(coyoteTime);
         previousCharacterState = currentCharacterState;
 
         if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
@@ -101,6 +102,16 @@ public class PlayerController : MonoBehaviour
 
                 break;
 
+        }
+
+        if (collisionExit == true && coyoteTime > 0)
+        {
+            coyoteTime -= 5*Time.deltaTime;
+
+            if (coyoteTime <= 0)
+            {
+                onTheGround = false;
+            }
         }
 
         //Debug.Log(currentCharacterState);
@@ -160,12 +171,15 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        collisionExit = false;
         onTheGround = true;
+        coyoteTime = 2;
     }
 
     private void OnCollisionExit2D(Collision2D collision)
     {
-        onTheGround = false;
+
+        collisionExit = true;
     }
 
     public bool IsWalking()
