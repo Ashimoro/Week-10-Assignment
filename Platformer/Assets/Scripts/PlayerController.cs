@@ -22,12 +22,16 @@ public class PlayerController : MonoBehaviour
     public float decelerationTime;
     public float maxSpeed;
     public float jumpForce;
+    public float terminalSpeed;
+    public float coyoteTime;
+
 
     public int health = 10;
 
     private Rigidbody2D playerRB;
     private float acceleration;
     private bool isJumping = false;
+    private bool onTheGround;
 
 
 
@@ -42,7 +46,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        Debug.Log(playerRB.velocity);
         previousCharacterState = currentCharacterState;
 
         if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
@@ -99,7 +103,7 @@ public class PlayerController : MonoBehaviour
 
         }
 
-        Debug.Log(currentCharacterState);
+        //Debug.Log(currentCharacterState);
     }
 
     private void FixedUpdate()
@@ -117,7 +121,6 @@ public class PlayerController : MonoBehaviour
         }
         if (isJumping)
         {
-            //Trigger our jump logic
             Debug.Log("Player is jumping woohoo!!");
             playerRB.velocity += Vector2.up * jumpForce;
             currentCharacterState = CharacterState.jump;
@@ -147,7 +150,22 @@ public class PlayerController : MonoBehaviour
             velocity = new Vector2(0, velocity.y);
         }
 
+        if (velocity.y < 0)
+        {
+            velocity.y = Mathf.Max(velocity.y, -terminalSpeed);
+        }
+
         playerRB.velocity = velocity;
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        onTheGround = true;
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        onTheGround = false;
     }
 
     public bool IsWalking()
@@ -156,6 +174,10 @@ public class PlayerController : MonoBehaviour
     }
     public bool IsGrounded()
     {
+        if (!onTheGround)
+        {
+            return false;
+        }
         return true;
     }
 

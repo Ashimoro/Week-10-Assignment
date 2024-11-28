@@ -1803,6 +1803,8 @@ MonoBehaviour:
   decelerationTime: 2
   maxSpeed: 50
   jumpForce: 5
+  terminalSpeed: 10
+  coyoteTime: 0
   health: 10
 --- !u!1 &1598075209
 GameObject:
