@@ -1,163 +1,180 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Unity.VisualScripting;
-using UnityEditor.Rendering;
 using UnityEngine;
-using UnityEngine.XR;
 
 public class PlayerController : MonoBehaviour
-
-
 {
-    public Rigidbody2D rb;
-
-    private bool moving;
-    private bool movingLeft;
-    private bool movingRight;
-    private bool jumping;
-
-    private float acceleration;
-    public float jumpforce;
-
-    float hInput;
-    float speed = 100 * Time.fixedDeltaTime;
-
-    public LayerMask groundLayer;
-    public Transform groundCheck;
-    public float checkRadius = 0.7f;
-
     public enum FacingDirection
     {
         left, right
     }
+    public FacingDirection currentFacingDirection = FacingDirection.right;
+
+    public enum CharacterState
+    {
+        idle, walk, jump, die
+    }
+    public CharacterState currentCharacterState = CharacterState.idle;
+    public CharacterState previousCharacterState = CharacterState.idle;
+
+
+    public float accelerationTime;
+    public float decelerationTime;
+    public float maxSpeed;
+    public float jumpForce;
+
+    public int health = 10;
+
+    private Rigidbody2D playerRB;
+    private float acceleration;
+    private bool isJumping = false;
+
+
+
 
     // Start is called before the first frame update
     void Start()
     {
-         rb = GetComponent<Rigidbody2D>();
-
+        playerRB = GetComponent<Rigidbody2D>();
+        acceleration = maxSpeed / accelerationTime;
     }
 
     // Update is called once per frame
     void Update()
     {
-        float hInput = Input.GetAxis("Horizontal");
-        Vector2 playerInput = new Vector2(hInput * speed, 0);
-        Debug.Log(playerInput);
+
+        previousCharacterState = currentCharacterState;
+
+        if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            isJumping = true;
+        }
+
+
+        switch (currentCharacterState)
+        {
+            case CharacterState.die:
+
+                break;
+            case CharacterState.jump:
+
+                if (IsGrounded())
+                {
+                    //We know we need to make a transition because we're not grounded anymore
+                    if (IsWalking())
+                    {
+                        currentCharacterState = CharacterState.walk;
+                    }
+                    else
+                    {
+                        currentCharacterState = CharacterState.idle;
+                    }
+                }
+
+                break;
+            case CharacterState.walk:
+                if (!IsWalking())
+                {
+                    currentCharacterState = CharacterState.idle;
+                }
+                //Are we jumping?
+                if (!IsGrounded())
+                {
+                    currentCharacterState = CharacterState.jump;
+                }
+                break;
+            case CharacterState.idle:
+                //Are we walking?
+                if (IsWalking())
+                {
+                    currentCharacterState = CharacterState.walk;
+                }
+                //Are we jumping?
+                if (!IsGrounded())
+                {
+                    currentCharacterState = CharacterState.jump;
+                }
+
+                break;
+
+        }
+
+        Debug.Log(currentCharacterState);
+    }
+
+    private void FixedUpdate()
+    {
+        //The input from the player needs to be determined and then passed in the to the MovementUpdate which should
+        //manage the actual movement of the character.
+        Vector2 playerInput = new Vector2();
+        if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            playerInput += Vector2.left;
+        }
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            playerInput += Vector2.right;
+        }
+        if (isJumping)
+        {
+            //Trigger our jump logic
+            Debug.Log("Player is jumping woohoo!!");
+            playerRB.velocity += Vector2.up * jumpForce;
+            currentCharacterState = CharacterState.jump;
+            isJumping = false;
+        }
+
+
         MovementUpdate(playerInput);
-        IsGrounded();
-        
-        if (hInput <= -0.01 || hInput >= 0.01)
-        {
-            moving = true;
-        }
-        else
-        {
-            moving = false;
-        }
-
-
-        if (hInput <= -0.01)
-        {
-            movingLeft = true;
-        }
-        else
-        {
-            movingLeft = false;
-        }
-
-
-        if (hInput >= 0.01)
-        {
-            movingRight = true;
-        }
-        else
-        {
-            movingRight = false;
-        }
-
-
-
-
-        //Debug.Log(jumping);
-        //Debug.Log(rb.velocity);
-        //Debug.Log(hInput);
     }
 
 
-    public void FixedUpdate()
-    {
-
-        if (Input.GetKeyDown("space"))
-        {
-            if (IsGrounded())
-            {
-                Debug.Log(rb.velocity);
-                rb.velocity = Vector2.up * jumpforce;
-            }
-        }
-
-
-    }
-
-    public void Jump()
-    {
-
-    }
 
     private void MovementUpdate(Vector2 playerInput)
     {
-        Vector2 velocity = rb.velocity;
-
-
+        Vector2 velocity = playerRB.velocity;
+       // Debug.Log(playerInput.ToString());
         if (playerInput.x != 0)
         {
             velocity += playerInput * acceleration * Time.fixedDeltaTime;
+            if (IsGrounded())
+            {
+                currentCharacterState = CharacterState.walk;
+            }
         }
-    }
+        else
+        {
+            velocity = new Vector2(0, velocity.y);
+        }
 
+        playerRB.velocity = velocity;
+    }
 
     public bool IsWalking()
     {
-        if (moving == true)
-        {
-            return true;
-        }
         return false;
     }
     public bool IsGrounded()
     {
-        if (jumping == true)
-        {
-            return false ;
-        }
         return true;
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    public bool IsDead()
     {
-        jumping = false;
+        return health <= 0;
     }
-
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        jumping = true;
-    }
-
-
 
     public FacingDirection GetFacingDirection()
     {
-        if (movingLeft == true && movingRight == false)
+        if (playerRB.velocity.x > 0)
         {
-            return FacingDirection.left;
+            currentFacingDirection = FacingDirection.right;
         }
-        else
+        else if (playerRB.velocity.x < 0)
         {
-            return FacingDirection.right;
+            currentFacingDirection = FacingDirection.left;
         }
+
+        return currentFacingDirection;
     }
 }
-
