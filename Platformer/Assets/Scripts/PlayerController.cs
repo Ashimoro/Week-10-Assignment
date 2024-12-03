@@ -15,7 +15,7 @@ public class PlayerController : MonoBehaviour
         idle, walk, jump, die
     }
     public CharacterState currentCharacterState = CharacterState.idle;
-    public CharacterState previousCharacterState = CharacterState.idle;
+    //public CharacterState previousCharacterState = CharacterState.idle;
 
 
     public float accelerationTime;
@@ -33,6 +33,7 @@ public class PlayerController : MonoBehaviour
     private bool isJumping = false;
     private bool onTheGround;
     private bool collisionExit;
+    private bool walking;
 
 
 
@@ -47,8 +48,8 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(coyoteTime);
-        previousCharacterState = currentCharacterState;
+        //Debug.Log(coyoteTime);
+        //previousCharacterState = currentCharacterState;
 
         if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
         {
@@ -81,11 +82,13 @@ public class PlayerController : MonoBehaviour
                 if (!IsWalking())
                 {
                     currentCharacterState = CharacterState.idle;
+                    Debug.Log("1");
                 }
                 //Are we jumping?
                 if (!IsGrounded())
                 {
                     currentCharacterState = CharacterState.jump;
+                    Debug.Log("2");
                 }
                 break;
             case CharacterState.idle:
@@ -93,11 +96,13 @@ public class PlayerController : MonoBehaviour
                 if (IsWalking())
                 {
                     currentCharacterState = CharacterState.walk;
+                    Debug.Log("3");
                 }
                 //Are we jumping?
                 if (!IsGrounded())
                 {
                     currentCharacterState = CharacterState.jump;
+                    Debug.Log("4");
                 }
 
                 break;
@@ -153,12 +158,15 @@ public class PlayerController : MonoBehaviour
             velocity += playerInput * acceleration * Time.fixedDeltaTime;
             if (IsGrounded())
             {
-                currentCharacterState = CharacterState.walk;
+                walking = true;
+                
             }
+
         }
         else
         {
             velocity = new Vector2(0, velocity.y);
+            walking = false;
         }
 
         if (velocity.y < 0)
@@ -184,6 +192,10 @@ public class PlayerController : MonoBehaviour
 
     public bool IsWalking()
     {
+        if (walking == true)
+        {
+            return true;
+        }
         return false;
     }
     public bool IsGrounded()
