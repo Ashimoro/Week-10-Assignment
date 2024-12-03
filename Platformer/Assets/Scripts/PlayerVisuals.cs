@@ -32,7 +32,8 @@ public class PlayerVisuals : MonoBehaviour
     //It is not recommended to make changes to the functionality of this code for the W10 journal.
     private void VisualsUpdate()
     {
-
+        if (playerController.previousCharacterState != playerController.currentCharacterState)
+        {
             switch (playerController.currentCharacterState)
             {
                 case PlayerController.CharacterState.idle:
@@ -48,7 +49,7 @@ public class PlayerVisuals : MonoBehaviour
                     animator.CrossFade("Death", 0f);
                     break;
             }
-        
+        }
 
 
         switch (playerController.GetFacingDirection())

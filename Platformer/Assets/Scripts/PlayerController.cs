@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -15,7 +16,7 @@ public class PlayerController : MonoBehaviour
         idle, walk, jump, die
     }
     public CharacterState currentCharacterState = CharacterState.idle;
-    //public CharacterState previousCharacterState = CharacterState.idle;
+    public CharacterState previousCharacterState = CharacterState.idle;
 
 
     public float accelerationTime;
@@ -48,8 +49,8 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //Debug.Log(coyoteTime);
-        //previousCharacterState = currentCharacterState;
+        Debug.Log(IsGrounded());
+        previousCharacterState = currentCharacterState;
 
         if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
         {
@@ -139,7 +140,6 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("Player is jumping woohoo!!");
             playerRB.velocity += Vector2.up * jumpForce;
-            currentCharacterState = CharacterState.jump;
             isJumping = false;
         }
 
@@ -200,8 +200,9 @@ public class PlayerController : MonoBehaviour
     }
     public bool IsGrounded()
     {
-        if (!onTheGround)
+        if (onTheGround == false)
         {
+            Debug.Log(123);
             return false;
         }
         return true;
