@@ -43,7 +43,14 @@ public class PlayerController : MonoBehaviour
 
     private bool isTouchingWall = false;
 
+    public float dashSpeed = 10f;
+    public float dashDuration = 0.2f;
+    private bool isDashing = false;
+    private float dashCooldown = 1f;
+    private float dashCooldownTimer = 0f;
 
+    private bool walkingLeft = false;
+    private bool walkingRight = false;
 
     void Start()
     {
@@ -54,7 +61,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        
+
         previousCharacterState = currentCharacterState;
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, groundCheck, groundLayer);
         RaycastHit2D wallHitLeft = Physics2D.Raycast(transform.position, Vector2.left, wallCheck, groundLayer);
@@ -74,11 +81,18 @@ public class PlayerController : MonoBehaviour
                     onTheGround = false;
                 }
             }
-            }
+        }
 
         if (isTouchingWall && !onTheGround && Input.GetKeyDown(KeyCode.UpArrow))
         {
             isJumping = true;
+        }
+
+
+
+        if (dashCooldownTimer > 0)
+        {
+            dashCooldownTimer -= Time.deltaTime;
         }
 
 
@@ -144,15 +158,24 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftArrow))
         {
             playerInput += Vector2.left;
+            walkingLeft = true;
+            walkingRight = false;
         }
         if (Input.GetKey(KeyCode.RightArrow))
         {
             playerInput += Vector2.right;
+            walkingRight = true;
+            walkingLeft = false;
         }
         if (isJumping)
         {
             playerRB.velocity += Vector2.up * jumpForce;
             isJumping = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && dashCooldownTimer <= 0 && !isDashing)
+        {
+            StartCoroutine(Dashing());
         }
 
 
@@ -227,4 +250,29 @@ public class PlayerController : MonoBehaviour
 
         return currentFacingDirection;
     }
+
+    private IEnumerator Dashing()
+    {
+
+        isDashing = true;
+        float dashingDirection = 0;
+        
+        
+        if (walkingLeft == true && walkingRight == false)
+        {
+            dashingDirection = -1;
+        } else if (walkingLeft == false && walkingRight == true)
+        {
+            dashingDirection = 1;
+        }
+
+
+        playerRB.velocity = new Vector2(dashingDirection * dashSpeed, 0);
+
+        yield return new WaitForSeconds(dashDuration);
+
+        isDashing = false;
+
+    }
+
 }
