@@ -52,6 +52,13 @@ public class PlayerController : MonoBehaviour
     private bool walkingLeft = false;
     private bool walkingRight = false;
 
+
+    public float hookPullSpeed = 5f;
+    public float hookDetectionRadius = 10f;
+    private float hookStopDistance = 1f;
+    private bool isGrappling = false;
+    private Transform currentHook;
+
     void Start()
     {
         playerRB = GetComponent<Rigidbody2D>();
@@ -86,6 +93,22 @@ public class PlayerController : MonoBehaviour
         if (isTouchingWall && !onTheGround && Input.GetKeyDown(KeyCode.UpArrow))
         {
             isJumping = true;
+        }
+
+
+        if (Input.GetKeyDown(KeyCode.E) && !isGrappling) 
+        {
+            GameObject nearestHook = FindNearestHook();
+            if (nearestHook != null)
+            {
+                Debug.Log("Grappling ");
+                StartGrapple(nearestHook.transform);
+            }
+        }
+
+        if (Input.GetKeyUp(KeyCode.E)) 
+        {
+            StopGrapple();
         }
 
 
@@ -178,6 +201,19 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(Dashing());
         }
 
+        if (isGrappling && currentHook != null)
+        {
+            Vector2 direction = (currentHook.position - transform.position).normalized;
+            Vector2 targetPosition = Vector2.MoveTowards(transform.position, currentHook.position, hookPullSpeed * Time.fixedDeltaTime);
+            playerRB.MovePosition(targetPosition);
+
+            if (Vector2.Distance(transform.position, currentHook.position) <= hookStopDistance)
+            {
+                StopGrapple();
+            }
+        }
+
+
 
         MovementUpdate(playerInput);
     }
@@ -229,9 +265,6 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-
-
-
     public bool IsDead()
     {
         return health <= 0;
@@ -274,5 +307,39 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
 
     }
+
+
+    GameObject FindNearestHook()
+    {
+        GameObject[] hooks = GameObject.FindGameObjectsWithTag("Hook");
+        GameObject nearestHook = null;
+        float minDistance = Mathf.Infinity;
+
+        foreach (GameObject hook in hooks)
+        {
+            float distance = Vector2.Distance(transform.position, hook.transform.position);
+            if (distance < minDistance && distance <= hookDetectionRadius)
+            {
+                minDistance = distance;
+                nearestHook = hook;
+            }
+        }
+
+        return nearestHook;
+    }
+
+    void StartGrapple(Transform hook)
+    {
+        isGrappling = true;
+        currentHook = hook;
+    }
+
+    void StopGrapple()
+    {
+        isGrappling = false;
+        currentHook = null;
+        playerRB.velocity = Vector2.zero; 
+    }
+
 
 }
