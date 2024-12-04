@@ -59,6 +59,7 @@ public class PlayerController : MonoBehaviour
     private bool isGrappling = false;
     private Transform currentHook;
 
+    Vector2 previousVelocity;
     void Start()
     {
         playerRB = GetComponent<Rigidbody2D>();
@@ -332,13 +333,14 @@ public class PlayerController : MonoBehaviour
     {
         isGrappling = true;
         currentHook = hook;
+        previousVelocity = playerRB.velocity;
     }
 
     void StopGrapple()
     {
         isGrappling = false;
         currentHook = null;
-        playerRB.velocity = Vector2.zero; 
+        playerRB.velocity = previousVelocity;
     }
 
 
