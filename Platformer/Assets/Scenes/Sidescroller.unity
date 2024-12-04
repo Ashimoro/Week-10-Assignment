@@ -1810,6 +1810,8 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
+  dashSpeed: 25
+  dashDuration: 0.2
 --- !u!212 &1433354320
 SpriteRenderer:
   m_ObjectHideFlags: 0
