@@ -38,8 +38,10 @@ public class PlayerController : MonoBehaviour
     private bool walking;
 
     private float groundCheck = 1f;
+    private float wallCheck = 1f;
     public LayerMask groundLayer;
 
+    private bool isTouchingWall = false;
 
 
 
@@ -55,6 +57,9 @@ public class PlayerController : MonoBehaviour
         
         previousCharacterState = currentCharacterState;
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, groundCheck, groundLayer);
+        RaycastHit2D wallHitLeft = Physics2D.Raycast(transform.position, Vector2.left, wallCheck, groundLayer);
+        RaycastHit2D wallHitRight = Physics2D.Raycast(transform.position, Vector2.right, wallCheck, groundLayer);
+        isTouchingWall = wallHitLeft.collider != null || wallHitRight.collider != null;
 
         if (hit.collider != null)
         {
@@ -71,7 +76,13 @@ public class PlayerController : MonoBehaviour
             }
             }
 
-            if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
+        if (isTouchingWall && !onTheGround && Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            isJumping = true;
+        }
+
+
+        if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
         {
             isJumping = true;
         }
@@ -190,7 +201,6 @@ public class PlayerController : MonoBehaviour
 
         if (onTheGround == true)
         {
-            Debug.Log("True");
             return true;
         }
         return false;
