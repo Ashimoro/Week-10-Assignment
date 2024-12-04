@@ -1803,10 +1803,13 @@ MonoBehaviour:
   accelerationTime: 2
   decelerationTime: 2
   maxSpeed: 50
-  jumpForce: 5
+  jumpForce: 7
   terminalSpeed: 10
-  coyoteTime: 2
+  coyoteTime: 1
   health: 10
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!212 &1433354320
 SpriteRenderer:
   m_ObjectHideFlags: 0

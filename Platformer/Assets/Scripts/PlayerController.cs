@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Burst.CompilerServices;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -36,23 +37,41 @@ public class PlayerController : MonoBehaviour
     private bool collisionExit;
     private bool walking;
 
+    private float groundCheck = 1f;
+    public LayerMask groundLayer;
 
 
 
-    // Start is called before the first frame update
+
     void Start()
     {
         playerRB = GetComponent<Rigidbody2D>();
         acceleration = maxSpeed / accelerationTime;
     }
 
-    // Update is called once per frame
+
     void Update()
     {
-        Debug.Log(IsGrounded());
+        
         previousCharacterState = currentCharacterState;
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, groundCheck, groundLayer);
 
-        if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
+        if (hit.collider != null)
+        {
+            onTheGround = true;
+            coyoteTime = 1;
+        } else if (hit.collider == null) {
+            {
+                coyoteTime -= 5 * Time.deltaTime;
+
+                if (coyoteTime <= 0)
+                {
+                    onTheGround = false;
+                }
+            }
+            }
+
+            if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
         {
             isJumping = true;
         }
@@ -67,7 +86,7 @@ public class PlayerController : MonoBehaviour
 
                 if (IsGrounded())
                 {
-                    //We know we need to make a transition because we're not grounded anymore
+
                     if (IsWalking())
                     {
                         currentCharacterState = CharacterState.walk;
@@ -83,50 +102,33 @@ public class PlayerController : MonoBehaviour
                 if (!IsWalking())
                 {
                     currentCharacterState = CharacterState.idle;
-                    Debug.Log("1");
                 }
-                //Are we jumping?
+
                 if (!IsGrounded())
                 {
                     currentCharacterState = CharacterState.jump;
-                    Debug.Log("2");
                 }
                 break;
             case CharacterState.idle:
-                //Are we walking?
+
                 if (IsWalking())
                 {
                     currentCharacterState = CharacterState.walk;
-                    Debug.Log("3");
                 }
-                //Are we jumping?
+
                 if (!IsGrounded())
                 {
                     currentCharacterState = CharacterState.jump;
-                    Debug.Log("4");
                 }
 
                 break;
 
         }
-
-        if (collisionExit == true && coyoteTime > 0)
-        {
-            coyoteTime -= 5*Time.deltaTime;
-
-            if (coyoteTime <= 0)
-            {
-                onTheGround = false;
-            }
-        }
-
-        //Debug.Log(currentCharacterState);
     }
 
     private void FixedUpdate()
     {
-        //The input from the player needs to be determined and then passed in the to the MovementUpdate which should
-        //manage the actual movement of the character.
+        
         Vector2 playerInput = new Vector2();
         if (Input.GetKey(KeyCode.LeftArrow))
         {
@@ -138,7 +140,6 @@ public class PlayerController : MonoBehaviour
         }
         if (isJumping)
         {
-            Debug.Log("Player is jumping woohoo!!");
             playerRB.velocity += Vector2.up * jumpForce;
             isJumping = false;
         }
@@ -152,7 +153,6 @@ public class PlayerController : MonoBehaviour
     private void MovementUpdate(Vector2 playerInput)
     {
         Vector2 velocity = playerRB.velocity;
-       // Debug.Log(playerInput.ToString());
         if (playerInput.x != 0)
         {
             velocity += playerInput * acceleration * Time.fixedDeltaTime;
@@ -177,19 +177,6 @@ public class PlayerController : MonoBehaviour
         playerRB.velocity = velocity;
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        collisionExit = false;
-        onTheGround = true;
-        coyoteTime = 2;
-    }
-
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-
-        collisionExit = true;
-    }
-
     public bool IsWalking()
     {
         if (walking == true)
@@ -200,13 +187,17 @@ public class PlayerController : MonoBehaviour
     }
     public bool IsGrounded()
     {
-        if (onTheGround == false)
+
+        if (onTheGround == true)
         {
-            Debug.Log(123);
-            return false;
+            Debug.Log("True");
+            return true;
         }
-        return true;
+        return false;
     }
+
+
+
 
     public bool IsDead()
     {
