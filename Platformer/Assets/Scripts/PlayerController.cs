@@ -203,6 +203,7 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.LeftShift) && dashCooldownTimer <= 0 && !isDashing)
         {
+            dashCooldownTimer = dashCooldown;
             StartCoroutine(Dashing());
         }
 
@@ -254,7 +255,6 @@ public class PlayerController : MonoBehaviour
         }
 
         playerRB.velocity = velocity;
-        Debug.Log(velocity);
     }
 
     public bool IsWalking()
