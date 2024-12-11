@@ -51,6 +51,7 @@ public class PlayerController : MonoBehaviour
 
     private bool walkingLeft = false;
     private bool walkingRight = false;
+    private bool canWallJump = true;
 
 
     public float hookPullSpeed = 5f;
@@ -58,6 +59,7 @@ public class PlayerController : MonoBehaviour
     private float hookStopDistance = 1f;
     private bool isGrappling = false;
     private Transform currentHook;
+
 
     Vector2 previousVelocity;
     void Start()
@@ -79,6 +81,7 @@ public class PlayerController : MonoBehaviour
         if (hit.collider != null)
         {
             onTheGround = true;
+            canWallJump = true;
             coyoteTime = 1;
         } else if (hit.collider == null) {
             {
@@ -91,9 +94,10 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (isTouchingWall && !onTheGround && Input.GetKeyDown(KeyCode.UpArrow))
+        if (isTouchingWall && !onTheGround && Input.GetKeyDown(KeyCode.UpArrow) && canWallJump == true)
         {
             isJumping = true;
+            canWallJump = false;
         }
 
 
@@ -102,7 +106,7 @@ public class PlayerController : MonoBehaviour
             GameObject nearestHook = FindNearestHook();
             if (nearestHook != null)
             {
-                Debug.Log("Grappling ");
+                Debug.Log("Grappling");
                 StartGrapple(nearestHook.transform);
             }
         }
@@ -215,7 +219,7 @@ public class PlayerController : MonoBehaviour
         }
 
 
-
+        
         MovementUpdate(playerInput);
     }
 
@@ -226,7 +230,11 @@ public class PlayerController : MonoBehaviour
         Vector2 velocity = playerRB.velocity;
         if (playerInput.x != 0)
         {
-            velocity += playerInput * acceleration * Time.fixedDeltaTime;
+            if (velocity.x <= maxSpeed && velocity.x >= -maxSpeed)
+            {
+                velocity += playerInput * acceleration * Time.fixedDeltaTime;
+            }
+
             if (IsGrounded())
             {
                 walking = true;
@@ -236,7 +244,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            velocity = new Vector2(0, velocity.y);
+            velocity -= playerInput * acceleration * Time.fixedDeltaTime;
             walking = false;
         }
 
@@ -246,6 +254,7 @@ public class PlayerController : MonoBehaviour
         }
 
         playerRB.velocity = velocity;
+        Debug.Log(velocity);
     }
 
     public bool IsWalking()
@@ -273,11 +282,11 @@ public class PlayerController : MonoBehaviour
 
     public FacingDirection GetFacingDirection()
     {
-        if (playerRB.velocity.x > 0)
+        if (playerRB.velocity.x > 0.01)
         {
             currentFacingDirection = FacingDirection.right;
         }
-        else if (playerRB.velocity.x < 0)
+        else if (playerRB.velocity.x < -0.01)
         {
             currentFacingDirection = FacingDirection.left;
         }
