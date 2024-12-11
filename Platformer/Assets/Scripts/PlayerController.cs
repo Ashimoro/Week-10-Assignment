@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Burst.CompilerServices;
@@ -32,9 +32,10 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody2D playerRB;
     private float acceleration;
+
     private bool isJumping = false;
+
     private bool onTheGround;
-    private bool collisionExit;
     private bool walking;
 
     private float groundCheck = 1f;
@@ -42,6 +43,7 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayer;
 
     private bool isTouchingWall = false;
+    private bool canWallJump = true;
 
     public float dashSpeed = 10f;
     public float dashDuration = 0.2f;
@@ -51,7 +53,6 @@ public class PlayerController : MonoBehaviour
 
     private bool walkingLeft = false;
     private bool walkingRight = false;
-    private bool canWallJump = true;
 
 
     public float hookPullSpeed = 5f;
@@ -73,11 +74,14 @@ public class PlayerController : MonoBehaviour
     {
 
         previousCharacterState = currentCharacterState;
+
+        // Checking for walls and floors around the character
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, groundCheck, groundLayer);
         RaycastHit2D wallHitLeft = Physics2D.Raycast(transform.position, Vector2.left, wallCheck, groundLayer);
         RaycastHit2D wallHitRight = Physics2D.Raycast(transform.position, Vector2.right, wallCheck, groundLayer);
         isTouchingWall = wallHitLeft.collider != null || wallHitRight.collider != null;
 
+        // Changes in the character's state during collision and during jumping
         if (hit.collider != null)
         {
             onTheGround = true;
@@ -94,6 +98,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        // The wall jump feature itself
         if (isTouchingWall && !onTheGround && Input.GetKeyDown(KeyCode.UpArrow) && canWallJump == true)
         {
             isJumping = true;
@@ -101,29 +106,25 @@ public class PlayerController : MonoBehaviour
         }
 
 
+        // Code part responsible for initialization of pull to hook
         if (Input.GetKeyDown(KeyCode.E) && !isGrappling) 
         {
-            GameObject nearestHook = FindNearestHook();
+            GameObject nearestHook = FindNearestHook(); //Find the nearest hook
             if (nearestHook != null)
             {
                 Debug.Log("Grappling");
-                StartGrapple(nearestHook.transform);
+                StartGrapple(nearestHook.transform); //Call the pull method
             }
         }
 
-        if (Input.GetKeyUp(KeyCode.E)) 
-        {
-            StopGrapple();
-        }
 
-
-
+        // Dash Cooldown
         if (dashCooldownTimer > 0)
         {
             dashCooldownTimer -= Time.deltaTime;
         }
 
-
+        
         if (IsGrounded() && Input.GetKeyDown(KeyCode.UpArrow))
         {
             isJumping = true;
@@ -186,7 +187,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftArrow))
         {
             playerInput += Vector2.left;
-            walkingLeft = true;
+            walkingLeft = true; // These two variables are responsible for making the game understand which way to dash.
             walkingRight = false;
         }
         if (Input.GetKey(KeyCode.RightArrow))
@@ -201,12 +202,16 @@ public class PlayerController : MonoBehaviour
             isJumping = false;
         }
 
+
+        // Call of the desh function as well as initialization of cooldown
         if (Input.GetKeyDown(KeyCode.LeftShift) && dashCooldownTimer <= 0 && !isDashing)
         {
             dashCooldownTimer = dashCooldown;
             StartCoroutine(Dashing());
         }
 
+
+        // This part of the code is responsible for pulling the player to the nearest hook after all checks
         if (isGrappling && currentHook != null)
         {
             Vector2 direction = (currentHook.position - transform.position).normalized;
@@ -231,7 +236,7 @@ public class PlayerController : MonoBehaviour
         Vector2 velocity = playerRB.velocity;
         if (playerInput.x != 0)
         {
-            if (velocity.x <= maxSpeed && velocity.x >= -maxSpeed)
+            if (velocity.x <= maxSpeed && velocity.x >= -maxSpeed) // Check that the character's speed is not higher than the maximum speed
             {
                 velocity += playerInput * acceleration * Time.fixedDeltaTime;
             }
@@ -297,10 +302,10 @@ public class PlayerController : MonoBehaviour
     private IEnumerator Dashing()
     {
 
-        isDashing = true;
+        isDashing = true; // This boolean is responsible for making sure that the player cannot move more than 1 time.
         float dashingDirection = 0;
-        
-        
+
+        // This part of the code is responsible for making the game understand in which direction the player makes a dash.
         if (walkingLeft == true && walkingRight == false)
         {
             dashingDirection = -1;
@@ -310,7 +315,7 @@ public class PlayerController : MonoBehaviour
         }
 
 
-        playerRB.velocity = new Vector2(dashingDirection * dashSpeed, 0);
+        playerRB.velocity = new Vector2(dashingDirection * dashSpeed, 0); // How far character will move during the dash
 
         yield return new WaitForSeconds(dashDuration);
 
@@ -318,14 +323,14 @@ public class PlayerController : MonoBehaviour
 
     }
 
-
+    // This whole function is responsible for finding the nearest hook
     GameObject FindNearestHook()
     {
-        GameObject[] hooks = GameObject.FindGameObjectsWithTag("Hook");
-        GameObject nearestHook = null;
-        float minDistance = Mathf.Infinity;
+        GameObject[] hooks = GameObject.FindGameObjectsWithTag("Hook"); // Creating a list of all objects with this tag
+        GameObject nearestHook = null; // This function is initially empty
+        float minDistance = Mathf.Infinity; // I used mathf.infinity to make any value lower than the original value
 
-        foreach (GameObject hook in hooks)
+        foreach (GameObject hook in hooks) //In this loop, the program will check all objects on the scene to see which one is closest, returning the one with the shortest distance to nearestHook.
         {
             float distance = Vector2.Distance(transform.position, hook.transform.position);
             if (distance < minDistance && distance <= hookDetectionRadius)
@@ -338,6 +343,7 @@ public class PlayerController : MonoBehaviour
         return nearestHook;
     }
 
+    // This method is responsible for returning the value of closest hook to fixedUpdate
     void StartGrapple(Transform hook)
     {
         isGrappling = true;
@@ -345,6 +351,7 @@ public class PlayerController : MonoBehaviour
         previousVelocity = playerRB.velocity;
     }
 
+    // Resets the value of currentHook and turns off the isGrappling state
     void StopGrapple()
     {
         isGrappling = false;
